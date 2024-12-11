@@ -1,0 +1,138 @@
+import json
+import os
+
+# Classe Cliente
+class Cliente:
+    def __init__(self, id_cliente, nome):
+        self.__id_cliente = id_cliente
+        self.__nome = nome
+        self.__contas = []
+
+    def adicionar_conta(self, conta):
+        self.__contas.append(conta)
+
+    def listar_contas(self):
+        return self.__contas
+
+    def get_id_cliente(self):
+        return self.__id_cliente
+
+    def get_nome(self):
+        return self.__nome
+
+# Classe ContaBancaria
+class ContaBancaria:
+    def __init__(self, numero_conta, cliente):
+        self.__numero_conta = numero_conta
+        self.__cliente = cliente
+        self.__saldo = 0.0
+        self.__transacoes = []
+
+    def depositar(self, valor):
+        if valor <= 0:
+            raise ValueError("O valor do depósito deve ser positivo.")
+        self.__saldo += valor
+        self.__transacoes.append(f"Depósito de R${valor:.2f}")
+
+    def sacar(self, valor):
+        if valor <= 0:
+            raise ValueError("O valor do saque deve ser positivo.")
+        if valor > self.__saldo:
+            raise ValueError("Saldo insuficiente.")
+        self.__saldo -= valor
+        self.__transacoes.append(f"Saque de R${valor:.2f}")
+
+    def get_saldo(self):
+        return self.__saldo
+
+    def get_transacoes(self):
+        return self.__transacoes
+
+    def get_numero_conta(self):
+        return self.__numero_conta
+
+    def get_cliente(self):
+        return self.__cliente
+
+# Funções de Persistência
+def salvar_dados(clientes):
+    data = []
+    for cliente in clientes:
+        cliente_data = {
+            "id_cliente": cliente.get_id_cliente(),
+            "nome": cliente.get_nome(),
+            "contas": []
+        }
+        for conta in cliente.listar_contas():
+            conta_data = {
+                "numero_conta": conta.get_numero_conta(),
+                "saldo": conta.get_saldo(),
+                "transacoes": conta.get_transacoes()
+            }
+            cliente_data["contas"].append(conta_data)
+        data.append(cliente_data)
+    
+    with open("clientes_banco.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+def carregar_dados():
+    if not os.path.exists("clientes_banco.json"):
+        return []
+    
+    with open("clientes_banco.json", "r") as f:
+        data = json.load(f)
+    
+    clientes = []
+    for cliente_data in data:
+        cliente = Cliente(cliente_data["id_cliente"], cliente_data["nome"])
+        for conta_data in cliente_data["contas"]:
+            conta = ContaBancaria(conta_data["numero_conta"], cliente)
+            conta.depositar(conta_data["saldo"])  # Recuperando o saldo
+            for transacao in conta_data["transacoes"]:
+                conta.get_transacoes().append(transacao)  # Recuperando transações
+            cliente.adicionar_conta(conta)
+        clientes.append(cliente)
+    
+    return clientes
+
+# Função principal
+def main():
+    try:
+        # Carregar dados persistidos
+        clientes = carregar_dados()
+
+        # Criar clientes e contas apenas se não existirem
+        if not any(cliente.get_id_cliente() == 1 for cliente in clientes):
+            cliente1 = Cliente(1, "João Silva")
+            conta1 = ContaBancaria("12345", cliente1)
+            conta1.depositar(1000.0)
+            conta1.sacar(200.0)
+            cliente1.adicionar_conta(conta1)
+            clientes.append(cliente1)
+
+        if not any(cliente.get_id_cliente() == 2 for cliente in clientes):
+            cliente2 = Cliente(2, "Maria Souza")
+            conta2 = ContaBancaria("67890", cliente2)
+            conta2.depositar(1500.0)
+            cliente2.adicionar_conta(conta2)
+            clientes.append(cliente2)
+
+        # Salvar os dados após as modificações
+        salvar_dados(clientes)
+
+        # Exibir dados
+        for cliente in clientes:
+            print(f"Cliente: {cliente.get_nome()} (ID: {cliente.get_id_cliente()})")
+            for conta in cliente.listar_contas():
+                print(f"  Conta: {conta.get_numero_conta()} - Saldo: R${conta.get_saldo():.2f}")
+                print("    Transações:")
+                for transacao in conta.get_transacoes():
+                    print(f"      {transacao}")
+    
+    except ValueError as e:
+        print(f"Erro: {e}")
+    except Exception as e:
+        print(f"Erro inesperado: {e}")
+
+if __name__ == "__main__":
+    main()
