@@ -1,7 +1,7 @@
 import json
 import os
 
-# Classe Cliente
+
 class Cliente:
     def __init__(self, id_cliente, nome):
         self.__id_cliente = id_cliente
@@ -20,7 +20,7 @@ class Cliente:
     def get_nome(self):
         return self.__nome
 
-# Classe ContaBancaria
+
 class ContaBancaria:
     def __init__(self, numero_conta, cliente):
         self.__numero_conta = numero_conta
@@ -54,7 +54,7 @@ class ContaBancaria:
     def get_cliente(self):
         return self.__cliente
 
-# Funções de Persistência
+
 def salvar_dados(clientes):
     data = []
     for cliente in clientes:
@@ -95,7 +95,7 @@ def carregar_dados():
     
     return clientes
 
-# Função principal
+
 def main():
     try:
         # Carregar dados persistidos
@@ -117,10 +117,10 @@ def main():
             cliente2.adicionar_conta(conta2)
             clientes.append(cliente2)
 
-        # Salvar os dados após as modificações
+       
         salvar_dados(clientes)
 
-        # Exibir dados
+     
         for cliente in clientes:
             print(f"Cliente: {cliente.get_nome()} (ID: {cliente.get_id_cliente()})")
             for conta in cliente.listar_contas():
